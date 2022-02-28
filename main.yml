@@ -2,25 +2,9 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: CloudFormationテスト
 
 Parameters:
-  ParamEnv:
-    Type: String
-    Default: dev
-    AllowedValues:
-      - dev
-      - stg
-      - prd
-    Description: ParamEnvは環境を選んで指定してください。
-  ParamProjectName:
-    Type: String
-    Default: testpj
-    Description: ParamProjectNameはプロジェクト名を-無しで指定してください。
   ParamTagName:
     Type: String
-    Default: !Sub
-    - ${ParamEnv}-${ParamProjectName}
-    - { ParamEnv: !Ref ParamEnv }
-    - { ParamProjectName: !Ref ParamProjectName }
-    Description: ParamTagNameは勝手に定義するので指定不要です。
+    Default: dev-testpj
 
 Resources:
   # ------------------------------------------------------------#
