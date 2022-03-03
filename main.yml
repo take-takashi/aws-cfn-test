@@ -9,6 +9,10 @@ Parameters:
     Type: String
     Default: ami-07b4f72c4c356c19d
     Description: ami-07b4f72c4c356c19d = Amazon Linux 2 AMI (HVM) - Kernel 5.10, SSD Volume Type(x86)
+  ParamKeyName:
+    Description: ssh key
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: dev-testpj
 
 Resources:
   # ------------------------------------------------------------#
@@ -142,6 +146,7 @@ Resources:
       InstanceInitiatedShutdownBehavior: stop
       InstanceType: t2.micro
       Monitoring: true
+      KeyName: !Ref ParamKeyName
       SecurityGroupIds: 
         - !Ref MySecurityGroup
       IamInstanceProfile: !Ref MyInstanceProfile
