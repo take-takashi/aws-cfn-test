@@ -1,10 +1,14 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: CloudFormationテスト
+Description: CloudFormation test
 
 Parameters:
   ParamTagName:
     Type: String
     Default: dev-testpj
+  ParamAmi:
+    Type: String
+    Default: ami-07b4f72c4c356c19d
+    Description: ami-07b4f72c4c356c19d = Amazon Linux 2 AMI (HVM) - Kernel 5.10, SSD Volume Type(x86)
 
 Resources:
   # ------------------------------------------------------------#
@@ -71,10 +75,92 @@ Resources:
       - Key: Name
         Value: !Sub ${ParamTagName}-pubsubnet
   # ----------------------------------------------------------- #
-  #  Public Subnet
+  #  Public Subnet RouteTable Association
   # ----------------------------------------------------------- #
   MyPublicSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref MyPublicSubnet
       RouteTableId: !Ref MyRouteTable
+  # ----------------------------------------------------------- #
+  #  Security Group
+  # ----------------------------------------------------------- #
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: !Sub ${ParamTagName}-sg
+      VpcId: !Ref MyVPC
+      Tags:
+        - Key: Name
+          Value: !Sub ${ParamTagName}-sg
+  # ----------------------------------------------------------- #
+  #  IAM Role
+  # ----------------------------------------------------------- #
+  MyIAMRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${ParamTagName}-role
+      Description: for ssm
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ec2.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Tags:
+        - Key: Name
+          Value: !Sub ${ParamTagName}-role
+  # ----------------------------------------------------------- #
+  #  Instance Profile
+  # ----------------------------------------------------------- #
+  MyInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: /
+      Roles:
+        - !Ref MyIAMRole
+      InstanceProfileName: !Sub ${ParamTagName}-ip
+  # ----------------------------------------------------------- #
+  #  EC2
+  # ----------------------------------------------------------- #
+  MyEC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: ap-northeast-1a
+      BlockDeviceMappings: 
+        - DeviceName: /dev/xvda
+          Ebs:
+            VolumeSize: 8
+            VolumeType: gp2
+      ImageId: !Ref ParamAmi
+      InstanceInitiatedShutdownBehavior: stop
+      InstanceType: t2.micro
+      Monitoring: true
+      SecurityGroupIds: 
+        - !Ref MySecurityGroup
+      IamInstanceProfile: !Ref MyInstanceProfile
+      SubnetId: !Ref MyPublicSubnet
+      UserData:
+        Fn::Base64: |
+          SWAPFILENAME=/swap.img
+          MEMSIZE=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
+          if [ $MEMSIZE -lt 2097152 ]; then
+            SIZE=$((MEMSIZE * 2))k
+          elif [ $MEMSIZE -lt 8388608 ]; then
+            SIZE=${MEMSIZE}k
+          elif [ $MEMSIZE -lt 67108864 ]; then
+            SIZE=$((MEMSIZE / 2))k
+          else
+            SIZE=4194304k
+          fi
+          fallocate -l $SIZE $SWAPFILENAME && mkswap $SWAPFILENAME && chmod 600 $SWAPFILENAME && swapon $SWAPFILENAME
+          echo "${SWAPFILENAME}  swap  swap  defaults 0 0" >> /etc/fstab
+      Tags:
+        - Key: Name
+          Value: !Sub ${ParamTagName}-ec2
