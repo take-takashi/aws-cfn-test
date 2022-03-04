@@ -104,7 +104,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       RoleName: !Sub ${ParamTagName}-role
-      Description: for ssm
+      Description: for SSM, CodeCommit
       AssumeRolePolicyDocument:
         Version: 2012-10-17
         Statement:
@@ -117,6 +117,7 @@ Resources:
       Path: /
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/AWSCodeCommitPowerUser
       Tags:
         - Key: Name
           Value: !Sub ${ParamTagName}-role
