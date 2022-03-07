@@ -7,8 +7,11 @@ Parameters:
     Default: dev-testpj
   ParamAmi:
     Type: String
-    Default: ami-07b4f72c4c356c19d
-    Description: ami-07b4f72c4c356c19d = Amazon Linux 2 AMI (HVM) - Kernel 5.10, SSD Volume Type(x86)
+    Default: ami-03c28b28e81872cfd
+    Description: ami-07b4f72c4c356c19d = Amazon Linux 2 AMI (HVM) - Kernel 5.10, SSD Volume Type(arm)
+  ParamInstanceType:
+    Type: String
+    Default: m6g.medium
   ParamKeyName:
     Description: ssh key
     Type: AWS::EC2::KeyPair::KeyName
@@ -137,15 +140,8 @@ Resources:
   MyEC2:
     Type: AWS::EC2::Instance
     Properties:
-      AvailabilityZone: ap-northeast-1a
-      BlockDeviceMappings: 
-        - DeviceName: /dev/xvda
-          Ebs:
-            VolumeSize: 8
-            VolumeType: gp2
       ImageId: !Ref ParamAmi
-      InstanceInitiatedShutdownBehavior: stop
-      InstanceType: t2.micro
+      InstanceType: !Ref ParamInstanceType
       Monitoring: true
       KeyName: !Ref ParamKeyName
       SecurityGroupIds: 
