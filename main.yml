@@ -12,6 +12,10 @@ Parameters:
   ParamInstanceType:
     Type: String
     Default: m6g.medium
+  ParamKeyName:
+    Description: ssh key
+    Type: AWS::EC2::KeyPair::KeyName
+    Default: dev-testpj
 
 Resources:
   # ------------------------------------------------------------#
@@ -139,6 +143,7 @@ Resources:
       ImageId: !Ref ParamAmi
       InstanceType: !Ref ParamInstanceType
       Monitoring: true
+      KeyName: !Ref ParamKeyName
       SecurityGroupIds: 
         - !Ref MySecurityGroup
       IamInstanceProfile: !Ref MyInstanceProfile
