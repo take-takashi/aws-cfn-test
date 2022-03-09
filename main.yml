@@ -135,34 +135,63 @@ Resources:
         - !Ref MyIAMRole
       InstanceProfileName: !Sub ${ParamTagName}-ip
   # ----------------------------------------------------------- #
+  #  Launch Template
+  # ----------------------------------------------------------- #
+  MyLaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties: 
+      LaunchTemplateName: !Sub ${ParamTagName}-lt
+      LaunchTemplateData: 
+        ImageId: !Ref ParamAmi
+        InstanceType: !Ref ParamInstanceType
+        Monitoring: 
+          Enabled: true
+        KeyName: !Ref ParamKeyName
+        NetworkInterfaces:
+          - DeviceIndex: 0
+            SubnetId: !Ref MyPublicSubnet
+            Groups:
+              - !Ref MySecurityGroup
+        BlockDeviceMappings:
+          - Ebs:
+              VolumeSize: 8
+              VolumeType: gp3
+              DeleteOnTermination: true
+            DeviceName: /dev/xvda
+        UserData:
+          Fn::Base64: |
+            #!/bin/bash
+            yum -y update
+
+            # swap
+            SWAPFILENAME=/swap.img
+            MEMSIZE=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
+            if [ $MEMSIZE -lt 2097152 ]; then
+              SIZE=$((MEMSIZE * 2))k
+            elif [ $MEMSIZE -lt 8388608 ]; then
+              SIZE=${MEMSIZE}k
+            elif [ $MEMSIZE -lt 67108864 ]; then
+              SIZE=$((MEMSIZE / 2))k
+            else
+              SIZE=4194304k
+            fi
+            fallocate -l $SIZE $SWAPFILENAME && mkswap $SWAPFILENAME && chmod 600 $SWAPFILENAME && swapon $SWAPFILENAME
+            echo "${SWAPFILENAME}  swap  swap  defaults 0 0" >> /etc/fstab
+        TagSpecifications:
+          - ResourceType: volume
+            Tags: 
+              - Key: Name
+                Value: !Sub ${ParamTagName}-ebs
+  # ----------------------------------------------------------- #
   #  EC2
   # ----------------------------------------------------------- #
   MyEC2:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: !Ref ParamAmi
-      InstanceType: !Ref ParamInstanceType
-      Monitoring: true
-      KeyName: !Ref ParamKeyName
-      SecurityGroupIds: 
-        - !Ref MySecurityGroup
+      LaunchTemplate:
+        LaunchTemplateId: !Ref MyLaunchTemplate
+        Version: !GetAtt MyLaunchTemplate.LatestVersionNumber
       IamInstanceProfile: !Ref MyInstanceProfile
-      SubnetId: !Ref MyPublicSubnet
-      UserData:
-        Fn::Base64: |
-          SWAPFILENAME=/swap.img
-          MEMSIZE=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
-          if [ $MEMSIZE -lt 2097152 ]; then
-            SIZE=$((MEMSIZE * 2))k
-          elif [ $MEMSIZE -lt 8388608 ]; then
-            SIZE=${MEMSIZE}k
-          elif [ $MEMSIZE -lt 67108864 ]; then
-            SIZE=$((MEMSIZE / 2))k
-          else
-            SIZE=4194304k
-          fi
-          fallocate -l $SIZE $SWAPFILENAME && mkswap $SWAPFILENAME && chmod 600 $SWAPFILENAME && swapon $SWAPFILENAME
-          echo "${SWAPFILENAME}  swap  swap  defaults 0 0" >> /etc/fstab
       Tags:
         - Key: Name
           Value: !Sub ${ParamTagName}-ec2
