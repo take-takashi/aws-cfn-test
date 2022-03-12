@@ -154,7 +154,7 @@ Resources:
               - !Ref MySecurityGroup
         BlockDeviceMappings:
           - Ebs:
-              VolumeSize: 8
+              VolumeSize: 16
               VolumeType: gp3
               DeleteOnTermination: true
             DeviceName: /dev/xvda
