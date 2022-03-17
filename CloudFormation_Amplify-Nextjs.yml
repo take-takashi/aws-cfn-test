@@ -101,6 +101,14 @@ Resources:
         - Key: Name
           Value: !Sub ${ParamTagName}-sg
   # ----------------------------------------------------------- #
+  #  Code Commit
+  # ----------------------------------------------------------- #
+  MyCodeCommit:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryName: !Sub ${ParamTagName}-repo
+      RepositoryDescription: Test Repository with Code
+  # ----------------------------------------------------------- #
   #  IAM Role
   # ----------------------------------------------------------- #
   MyIAMRole:
@@ -176,11 +184,13 @@ Resources:
 
             # create .gitignore
             cat <<_EOF_ >  /home/ec2-user/.gitignore
-              .*
-              !.gitignore
+            .*
+            !.gitignore
             _EOF_
             chown ec2-user:ec2-user /home/ec2-user/.gitignore
 
+            # install amplify cli
+            npm install -g @aws-amplify/cli
 
             # swap
             SWAPFILENAME=/swap.img
