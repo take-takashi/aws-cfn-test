@@ -101,14 +101,6 @@ Resources:
         - Key: Name
           Value: !Sub ${ParamTagName}-sg
   # ----------------------------------------------------------- #
-  #  Code Commit
-  # ----------------------------------------------------------- #
-  MyCodeCommit:
-    Type: AWS::CodeCommit::Repository
-    Properties:
-      RepositoryName: !Sub ${ParamTagName}-repo
-      RepositoryDescription: Test Repository with Code
-  # ----------------------------------------------------------- #
   #  IAM Role
   # ----------------------------------------------------------- #
   MyIAMRole:
@@ -181,13 +173,6 @@ Resources:
             su ec2-user -c "git config --global init.defaultBranch main"
             su ec2-user -c "git config --global credential.helper '!aws codecommit credential-helper $@'"
             su ec2-user -c "git config --global credential.UseHttpPath true"
-
-            # create .gitignore
-            cat <<_EOF_ >  /home/ec2-user/.gitignore
-            .*
-            !.gitignore
-            _EOF_
-            chown ec2-user:ec2-user /home/ec2-user/.gitignore
 
             # install amplify cli
             npm install -g @aws-amplify/cli
