@@ -175,7 +175,8 @@ Resources:
             su ec2-user -c "git config --global credential.UseHttpPath true"
 
             # install amplify cli
-            npm install -g @aws-amplify/cli
+            echo ===== install amplify cli =====
+            su ec2-user -c "npm install -g @aws-amplify/cli"
 
             # swap
             SWAPFILENAME=/swap.img
