@@ -179,19 +179,30 @@ Resources:
           Value: !Sub ${ParamTagName}-event-role
   # ----------------------------------------------------------- #
   #  CloudWatch Event
-  #  毎日0時に対象のインスタンスを停止（UTCなので注意）
+  #  毎日0時に対象のインスタンスを停止（JST00:00はUTC15:00）
   # ----------------------------------------------------------- #
   MyEventRule:
     Type: AWS::Events::Rule
     Properties:
       Name: !Sub ${ParamTagName}-event
       Description: Stop instance dairy 00:00
-      ScheduleExpression: cron(00 09 * * ? *)
+      ScheduleExpression: cron(00 15 * * ? *)
       State: ENABLED
       Targets:
         - Arn: arn:aws:ssm:ap-northeast-1::automation-definition/AWS-StopEC2Instance:$DEFAULT
           Id: !Ref MyEC2
           RoleArn: !Sub ${MyEventIAMRole.Arn}
+  # ----------------------------------------------------------- #
+  #  Code Commit
+  # ----------------------------------------------------------- #
+  MyCodeCommit:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryDescription: !Sub Repository for ${ParamTagName}
+      RepositoryName: !Sub ${ParamTagName}-repo
+      Tags: 
+        - Key: Name
+          Value: !Sub ${ParamTagName}-repo
   # ----------------------------------------------------------- #
   #  Instance Profile
   # ----------------------------------------------------------- #
@@ -227,16 +238,19 @@ Resources:
               DeleteOnTermination: true
             DeviceName: /dev/xvda
         UserData:
-          Fn::Base64: |
+          Fn::Base64: !Sub |
             #!/bin/bash
+            echo ===== yum update =====
             yum -y update
 
             # install node@16.13.0
+            echo ===== install node@16.13.0 =====
             curl -fsSL https://rpm.nodesource.com/setup_16.x | bash -
             yum install nodejs -y
             npm upgrade -g npm
 
             # install git
+            echo ===== install git =====
             yum install git -y
             su ec2-user -c "git config --global init.defaultBranch main"
             su ec2-user -c "git config --global credential.helper '!aws codecommit credential-helper $@'"
@@ -244,22 +258,11 @@ Resources:
 
             # install amplify cli
             echo ===== install amplify cli =====
-            su ec2-user -c "npm install -g @aws-amplify/cli"
+            su root -c "npm install -g @aws-amplify/cli"
 
-            # swap
-            SWAPFILENAME=/swap.img
-            MEMSIZE=`cat /proc/meminfo | grep MemTotal | awk '{print $2}'`
-            if [ $MEMSIZE -lt 2097152 ]; then
-              SIZE=$((MEMSIZE * 2))k
-            elif [ $MEMSIZE -lt 8388608 ]; then
-              SIZE=${MEMSIZE}k
-            elif [ $MEMSIZE -lt 67108864 ]; then
-              SIZE=$((MEMSIZE / 2))k
-            else
-              SIZE=4194304k
-            fi
-            fallocate -l $SIZE $SWAPFILENAME && mkswap $SWAPFILENAME && chmod 600 $SWAPFILENAME && swapon $SWAPFILENAME
-            echo "${SWAPFILENAME}  swap  swap  defaults 0 0" >> /etc/fstab
+            # git clone 
+            su ec2-user -c "git clone ${MyCodeCommit.CloneUrlHttp}"
+            echo stackname = ${AWS::StackName}
         TagSpecifications:
           - ResourceType: volume
             Tags: 
