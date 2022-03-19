@@ -101,6 +101,35 @@ Resources:
         - Key: Name
           Value: !Sub ${ParamTagName}-sg
   # ----------------------------------------------------------- #
+  #  IAM Role(Amplify user)
+  # ----------------------------------------------------------- #
+  MyAmplifyUser:
+    Type: AWS::IAM::User
+    Properties:
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AWSCodeCommitPowerUser
+        - arn:aws:iam::aws:policy/AdministratorAccess-Amplify
+      Path: /
+      UserName: !Sub ${ParamTagName}-amplify-user
+      Tags:
+        - Key: Name
+          Value: !Sub ${ParamTagName}-amplify-user
+  # ----------------------------------------------------------- #
+  #  IAM User AccessKey(Amplify user)
+  # ----------------------------------------------------------- #
+  MyAmplifyUserAccessKey:
+    Type: AWS::IAM::AccessKey
+    Properties:
+      UserName: !Ref MyAmplifyUser
+  # ----------------------------------------------------------- #
+  #  IAM User AccessKey Secret(Amplify user)
+  # ----------------------------------------------------------- #
+  MyAmplifyUserAccessKeySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub ${ParamTagName}-amplify-user-credentials
+      SecretString: !Sub "{\"accessKeyId\":\"${MyAmplifyUserAccessKey}\",\"secretAccessKey\":\"${MyAmplifyUserAccessKey.SecretAccessKey}\"}"
+  # ----------------------------------------------------------- #
   #  IAM Role
   # ----------------------------------------------------------- #
   MyIAMRole:
