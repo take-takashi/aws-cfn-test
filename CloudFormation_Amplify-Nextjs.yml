@@ -109,6 +109,7 @@ Resources:
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AWSCodeCommitPowerUser
         - arn:aws:iam::aws:policy/AdministratorAccess-Amplify
+        - arn:aws:iam::aws:policy/AmazonDynamoDBReadOnlyAccess
       Path: /
       UserName: !Sub ${ParamTagName}-amplify-user
       Tags:
