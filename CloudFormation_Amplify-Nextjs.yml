@@ -261,6 +261,8 @@ Resources:
             su root -c "npm install -g @aws-amplify/cli"
 
             # git clone 
+            echo ===== git clone =====
+            cd /home/ec2-user
             su ec2-user -c "git clone ${MyCodeCommit.CloneUrlHttp}"
             echo stackname = ${AWS::StackName}
         TagSpecifications:
