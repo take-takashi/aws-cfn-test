@@ -280,6 +280,8 @@ Resources:
             su ec2-user -c "git config --global init.defaultBranch main"
             su ec2-user -c "git config --global credential.helper '!aws codecommit credential-helper $@'"
             su ec2-user -c "git config --global credential.UseHttpPath true"
+            su ec2-user -c "git config --global user.email 'take.t.public@gmail.com'"
+            su ec2-user -c "git config --global user.name 'takashi.take'"
 
             # install amplify cli
             echo ===== install amplify cli =====
